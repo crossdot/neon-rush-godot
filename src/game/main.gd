@@ -8,6 +8,13 @@ var rm: RunManager
 var ui
 var ui_layer: CanvasLayer
 
+# World logical size. The game is a fixed 720-wide portrait canvas (matching the
+# HTML), so the horizontal grid ALWAYS equals Gamedata.W — never derived from
+# get_visible_rect() (which can differ under canvas_items/expand and desync the
+# collision grid from the drawn grid). Only the height is adaptive.
+var _W: float = Gamedata.W
+var _H: float = 1280.0
+
 
 func _ready() -> void:
 	rm = RunManager.new()
@@ -22,9 +29,9 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	var vs: Vector2 = get_viewport().get_visible_rect().size
-	var W: float = 720.0 if vs.x <= 0.0 else vs.x
-	var H: float = 1280.0 if vs.y <= 0.0 else vs.y
-	rm.advance(delta, W, H)
+	_W = Gamedata.W
+	_H = 1280.0 if vs.y <= 0.0 else vs.y
+	rm.advance(delta, _W, _H)
 	if rm.state == "playing":
 		ui.sync_hud(rm)
 	queue_redraw()
@@ -33,25 +40,26 @@ func _process(delta: float) -> void:
 func _input(event: InputEvent) -> void:
 	if rm.state != "playing":
 		return
+	var extent := get_viewport().get_visible_rect().size.x
+	var scale := Gamedata.W / extent if extent > 0.0 else 1.0
 	var p := event as InputEventMouseMotion
 	if p:
-		rm.set_player_target(p.position.x)
+		rm.set_player_target(p.position.x * scale)
 		return
 	var sd := event as InputEventScreenDrag
 	if sd:
-		rm.set_player_target(sd.position.x)
+		rm.set_player_target(sd.position.x * scale)
 		return
 	var st := event as InputEventScreenTouch
 	if st:
 		if st.pressed:
-			rm.set_player_target(st.position.x)
+			rm.set_player_target(st.position.x * scale)
 			rm.tap_to_resume()
 
 
 func _draw() -> void:
-	var vs: Vector2 = get_viewport().get_visible_rect().size
-	var W: float = 720.0 if vs.x <= 0.0 else vs.x
-	var H: float = 1280.0 if vs.y <= 0.0 else vs.y
+	var W := _W
+	var H := _H
 	var fx: bool = Save.data.fx_enabled
 	var p: Dictionary = rm.pal
 	var shake: float = rm.shake if fx else 0.0

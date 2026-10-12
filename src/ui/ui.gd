@@ -29,7 +29,7 @@ const FONT: String = "res://icon.svg"   # placeholder (not used)
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build_hud()
 	_build_screens()
@@ -37,6 +37,13 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	# A Control directly under a CanvasLayer does NOT resolve PRESET_FULL_RECT
+	# anchors to the viewport (it stays 0x0), so pin its size/position to the
+	# visible rect every frame.
+	var vs: Vector2 = get_viewport().get_visible_rect().size
+	if vs.x > 0.0 and vs.y > 0.0:
+		position = Vector2.ZERO
+		size = vs
 	if banner_t > 0.0:
 		banner_t -= delta
 		if banner_t <= 0.0:
@@ -75,14 +82,14 @@ func _btn(text: String, cb: Callable) -> Button:
 func _full_screen() -> Control:
 	var c := ColorRect.new()
 	c.color = Color(0.008, 0.012, 0.05, 0.86)
-	c.set_anchors_preset(Control.PRESET_FULL_RECT)
+	c.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	c.mouse_filter = Control.MOUSE_FILTER_STOP
 	return c
 
 
 func _vbox() -> VBoxContainer:
 	var v := VBoxContainer.new()
-	v.set_anchors_preset(Control.PRESET_FULL_RECT)
+	v.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	v.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_theme_constant_override("separation", 16)
 	return v

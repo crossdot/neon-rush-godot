@@ -259,6 +259,8 @@ func set_player_target(x: float) -> void:
 func advance(dt: float, W: float, H: float) -> void:
 	player.W = W
 	player.H = H
+	# Ship is pinned to SHIP_Y at all times; recompute so it tracks a changing H.
+	player.y = player.H * Gamedata.SHIP_Y
 	if state == "playing":
 		update_playing(dt, W, H)
 	elif state == "dead" and deathWait > 0.0:
