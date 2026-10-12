@@ -16,7 +16,11 @@ static func seed(s: int) -> void:
 
 
 static func clampf(v: float, a: float, b: float) -> float:
-	return v if v > a else (a if v < a else b)
+	if v < a:
+		return a
+	if v > b:
+		return b
+	return v
 
 
 static func lerpf(a: float, b: float, t: float) -> float:
