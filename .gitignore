@@ -9,3 +9,6 @@ build/
 
 # Editor/IDE
 *.tmp
+
+# Android SDK (local, not in git)
+.android-sdk/

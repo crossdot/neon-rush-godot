@@ -9,7 +9,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 GODOT_BIN="${GODOT_BIN:-godot}"
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"          # репозиторий (для tools/setup-android-sdk.sh)
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"          # репозиторий (для tools/setup-android-sdk.sh)
 WITH_ANDROID=0
 LINUX_ONLY=0
 for a in "$@"; do
