@@ -305,10 +305,12 @@ func _build_overlays() -> void:
 	choice.name = "choice"
 	add_child(choice)
 	screen_roots["choice"] = choice
-	var cv := _vbox()
-	choice.add_child(cv)
-	cv.add_child(_title("ENERGY FULL — CHOOSE", Color("#eafcff")))
-	screen_roots["choice_cards"] = cv
+	# The title + cards are added DIRECTLY to `choice` (and laid out manually in
+	# show_choice()). Children added to an intermediate plain Control at runtime
+	# are NOT rendered under this CanvasLayer setup, and a VBoxContainer neither
+	# re-sorts nor renders runtime children (they all land/sit at (0,0)), so we
+	# host them straight on the overlay and set explicit positions/sizes.
+	screen_roots["choice_cards"] = choice
 
 	# ad overlay
 	var ad := _full_screen()
@@ -394,23 +396,43 @@ func show_record(score: int, cb: Callable) -> void:
 
 
 func show_choice(list: Array, cb: Callable) -> void:
-	var cards: VBoxContainer = screen_roots["choice_cards"]
-	for child in cards.get_children():
+	var host: Control = screen_roots["choice"]
+	for child in host.get_children():
 		child.queue_free()
-	for u in list:
+	# Manual, deterministic layout (see _build_overlays). Title + cards are direct
+	# children of the overlay so they actually render.
+	var cs: Vector2 = host.size
+	if cs.x <= 0.0 or cs.y <= 0.0:
+		cs = get_viewport().get_visible_rect().size
+	var cw: float = minf(440.0, cs.x * 0.84)
+	var cx: float = (cs.x - cw) / 2.0
+	var ch2: float = 76.0
+	var sep: float = 18.0
+	var title := _label("ENERGY FULL — CHOOSE", 26, Color("#eafcff"), HORIZONTAL_ALIGNMENT_CENTER)
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	title.size = Vector2(cw, 32)
+	title.position = Vector2(cx, cs.y * 0.26)
+	host.add_child(title)
+	var y0: float = cs.y * 0.40
+	for i in list.size():
+		var u = list[i]
 		var card := ColorRect.new()
 		card.color = Color(0.016, 0.04, 0.11, 0.9)
-		card.custom_minimum_size = Vector2(300, 64)
-		var vb := VBoxContainer.new()
-		vb.set_anchors_preset(Control.PRESET_FULL_RECT)
-		card.add_child(vb)
-		var name_l := _label(u.name, 20, Color(u.color), HORIZONTAL_ALIGNMENT_CENTER)
-		var desc_l := _label(u.desc, 12, Color("#cfe9ff"), HORIZONTAL_ALIGNMENT_CENTER)
-		vb.add_child(name_l)
-		vb.add_child(desc_l)
+		card.size = Vector2(cw, ch2)
+		card.position = Vector2(cx, y0 + i * (ch2 + sep))
 		card.gui_input.connect(func(ev): if ev is InputEventMouseButton and ev.pressed: cb.call(u))
-		cards.add_child(card)
-	screen_roots["choice"].visible = true
+		var name_l := _label(u.name, 20, Color(u.color), HORIZONTAL_ALIGNMENT_CENTER)
+		name_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		name_l.size = Vector2(cw, 28)
+		name_l.position = Vector2(0, 8)
+		card.add_child(name_l)
+		var desc_l := _label(u.desc, 12, Color("#cfe9ff"), HORIZONTAL_ALIGNMENT_CENTER)
+		desc_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		desc_l.size = Vector2(cw, 26)
+		desc_l.position = Vector2(0, 40)
+		card.add_child(desc_l)
+		host.add_child(card)
+	host.visible = true
 
 
 func show_ad(kind: String, secs: int, cb: Callable) -> void:
