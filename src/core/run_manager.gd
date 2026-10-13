@@ -130,6 +130,7 @@ func open_choice() -> void:
 			state = "playing"
 			freezeT = 2.0
 			tapHold = false
+			ui.hide_screens()
 			run_state_changed.emit(state)
 		)
 	run_state_changed.emit(state)
